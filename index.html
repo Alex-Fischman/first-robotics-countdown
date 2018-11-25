@@ -12,46 +12,71 @@
     </head>
 
     <body>
-        <h1>FIRST Robotics Competition Countdown</h1>
+        <h1>FIRST Robotics Kickoff Countdown</h1>
         <h2 id="countdown"></h2>
         <h2 id="team"></h2>
 
         <script type="text/javascript">
-            //Inital calculations
-            const now = Date.now();
-            const kickoff = Date.UTC(2019, 0, 5, 15, 30); // Needs to be set once a year
-            const delta = Math.round((kickoff - now) / 1000 / 60 / 60);
-            const page = Math.ceil(delta / 500);
+            //Get the current time
+            let seconds = 0,
+                minutes = 0,
+                hours = 0,
+                lastTeam = { team_number: 0 },
+                page = 0;
+            const update = function() {
+                const now = Date.now();
+                const kickoff = Date.UTC(2019, 0, 5, 15, 30); // Needs to be set once a year
+                const delta = kickoff - now;
+                seconds = delta / 1000; //Temp
+                minutes = seconds / 60; //Temp
+                hours = Math.floor(minutes / 60);
+                minutes = Math.floor(minutes - hours * 60);
+                seconds = Math.floor(seconds - minutes * 60 - hours * 60 * 60);
+                page = Math.floor(hours / 500);
+
+                if (hours != lastTeam.team_number) {
+                    request();
+                }
+                else {
+                    print(lastTeam);
+                }
+            };
 
             //Async printing
             const print = function(teamObject) {
                 const countdownDisplay = document.getElementById("countdown");
-                countdownDisplay.innerHTML = "The competition will commence in " + delta + " hours";
+                countdownDisplay.innerHTML = "The competition will commence in " +
+                    hours + " hours, " +
+                    minutes + " minutes, and " +
+                    seconds + " seconds.";
                 const teamDisplay = document.getElementById("team");
                 teamDisplay.innerHTML = teamObject === undefined ?
                     "There is no team that matches the current hour." :
-                    "Team number " + delta + " is " + teamObject.nickname + ".";
+                    "Team number " + teamObject.team_number + " is " + teamObject.nickname + ".";
             };
-            
-            //Find team
-            const handleData = function() {
-                const responseJSON = JSON.parse(oReq.response);
-                print(responseJSON.find(function(teamObject) {
-                    return teamObject.team_number == delta;
-                }));
-            };
-            
-            //Declare here in case these change
-            const url = "https://www.thebluealliance.com/api/v3";
-            const request = "/teams/" + page + "/simple";
-            const key = "YSRSyEWHGsDeUVWpXlkRRFnSd5pEn63eIeg7IV6UQ5cNXJtEuwnALfjhU49mJewV";
-            
+
             //Make the request
-            let oReq = new XMLHttpRequest();
-            oReq.addEventListener("load", handleData);
-            oReq.open("GET", url + request);
-            oReq.setRequestHeader("X-TBA-Auth-Key", key);
-            oReq.send();
+            const request = function() {
+                let oReq = new XMLHttpRequest();
+                const url = "https://www.thebluealliance.com/api/v3";
+                const request = "/teams/" + page + "/simple";
+                const key = "YSRSyEWHGsDeUVWpXlkRRFnSd5pEn63eIeg7IV6UQ5cNXJtEuwnALfjhU49mJewV";
+                //Find team
+                const handleData = function() {
+                    const responseJSON = JSON.parse(oReq.response);
+                    lastTeam = responseJSON.find(function(teamObject) {
+                        return teamObject.team_number == hours;
+                    });
+                    print(lastTeam);
+                };
+                //Make the request
+                oReq.addEventListener("load", handleData);
+                oReq.open("GET", url + request);
+                oReq.setRequestHeader("X-TBA-Auth-Key", key);
+                oReq.send();
+            };
+
+            const loop = setInterval(update, 500);
         </script>
     </body>
 
