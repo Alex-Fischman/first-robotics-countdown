@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html>
+
+    <head>
+        <title>FIRST Countdown</title>
+        <style type="text/css">
+            body {
+                text-align: center;
+                width: 100%;
+            }
+        </style>
+    </head>
+
+    <body>
+        <h1>FIRST Robotics Competition Countdown</h1>
+        <h2 id="countdown"></h2>
+        <h2 id="team"></h2>
+
+        <script type="text/javascript">
+            //Inital calculations
+            const now = Date.now();
+            const kickoff = Date.UTC(2019, 0, 5, 15, 30); // Needs to be set once a year
+            const delta = Math.round((kickoff - now) / 1000 / 60 / 60);
+            const page = Math.floor(delta / 500);
+
+            //Async printing
+            const print = function(teamObject) {
+                const countdownDisplay = document.getElementById("countdown");
+                countdownDisplay.innerHTML = "The competition will commence in " + delta + " hours";
+                const teamDisplay = document.getElementById("team");
+                teamDisplay.innerHTML = teamObject === undefined ?
+                    "There is no team that matches the current hour." :
+                    "Team number " + delta + " is " + teamObject.nickname;
+            };
+            
+            //Find team
+            const handleData = function() {
+                const responseJSON = JSON.parse(oReq.response);
+                print(responseJSON.find(function(teamObject) {
+                    return teamObject.team_number == delta;
+                }));
+            };
+            
+            //Declare here in case these change
+            const url = "https://www.thebluealliance.com/api/v3";
+            const request = "/teams/" + page + "/simple";
+            const key = "YSRSyEWHGsDeUVWpXlkRRFnSd5pEn63eIeg7IV6UQ5cNXJtEuwnALfjhU49mJewV";
+            
+            //Make the request
+            let oReq = new XMLHttpRequest();
+            oReq.addEventListener("load", handleData);
+            oReq.open("GET", url + request);
+            oReq.setRequestHeader("X-TBA-Auth-Key", key);
+            oReq.send();
+        </script>
+    </body>
+
+</html>
